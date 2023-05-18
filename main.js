@@ -2,6 +2,7 @@ var http = require('http');
 var fs = require('fs');
 var url = require('url');  // url이란 모듈을 사용할 것이다. url이라는 변수를 통해서 사용할 것이다.
 var qs = require('querystring');
+//refactoring
 
 var template = {
   html:function(title, list, body, control){
