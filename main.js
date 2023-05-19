@@ -2,38 +2,12 @@ var http = require('http');
 var fs = require('fs');
 var url = require('url');  // url이란 모듈을 사용할 것이다. url이라는 변수를 통해서 사용할 것이다.
 var qs = require('querystring');
-//refactoring
+var template = require('./lib/template.js');
+var path = require('path');
+var sanitizeHtml = require('sanitize-html');
+const sanitize = require('sanitize-html');
 
-var template = {
-  html:function(title, list, body, control){
-    return `
-    <!doctype html>
-    <html>
-    <head>
-      <title>WEB1 - ${title}</title>
-      <meta charset="utf-8">
-    </head>
-    <body>
-      <h1><a href="/">WEB</a></h1>
-      ${list}
-      ${control}
-      ${body}
-    </body>
-    </html>
-    `
-  },
-  list:function(filelist){
-    var list = '<ul>';
-    var i = 0;
-    while(i < filelist.length){
-      list = list + `<li><a href="/?id=${filelist[i]}">${filelist[i]}</a></li>`;
-      i++;
-    }
-    list = list + '</ul>';
-    return list;
-  
-  }
-}
+
 
 var app = http.createServer(function(request,response){
     var _url = request.url;
@@ -54,14 +28,17 @@ var app = http.createServer(function(request,response){
 
       } else {
         fs.readdir('./data', function(error,filelist){
-          fs.readFile(`data/${queryData.id}`, 'utf-8', function(err,description){
+          var filteredId = path.parse(queryData.id).base;
+          fs.readFile(`data/${filteredId}`, 'utf-8', function(err,description){
             var title = queryData.id;
+            var sanitizeTitle = sanitizeHtml(title);
+            var sanitizeDescription = sanitizeHtml(description)
             var list = template.list(filelist);
-            var HTML = template.html(title, list,`<h2>${title}</h2><p>${description}</p>`,
+            var HTML = template.html(sanitizeTitle, list,`<h2>${sanitizeTitle}</h2><p>${sanitizeDescription}</p>`,
             `<a href="/create">create</a> 
-             <a href="/update?id=${title}">update</a> 
+             <a href="/update?id=${sanitizeTitle}">update</a> 
              <form action="delete_process" method="post" onsubmit="삭제하시겠습니까?">
-              <input type="hidden" name = "id" value="${title}">
+              <input type="hidden" name = "id" value="${sanitizeTitle}">
               <input type="submit" value = "delete">
              </form>`);
             response.writeHead(200); // 웹페이지에 원하는 데이터를 찾았을때 200
@@ -103,9 +80,10 @@ var app = http.createServer(function(request,response){
         })
       });
 
-    } else if(pathname === '/update'){
+    } else if(pathname === '/update'){ // update 창
       fs.readdir('./data', function(error,filelist){
-        fs.readFile(`data/${queryData.id}`, 'utf-8', function(err,description){
+        var filteredId = path.parse(queryData.id).base;
+        fs.readFile(`data/${filteredId}`, 'utf-8', function(err,description){
           var title = queryData.id;
           var list = template.list(filelist);
           var HTML = template.html(title, list,`
@@ -124,7 +102,7 @@ var app = http.createServer(function(request,response){
           response.end(HTML); 
         });
       });
-    } else if(pathname === '/update_process'){
+    } else if(pathname === '/update_process'){ // update process
         var body = '';
         request.on('data', function(data){ // 정보 수신
           body += data;
@@ -141,8 +119,7 @@ var app = http.createServer(function(request,response){
             });
           });
         });
-
-    } else if (pathname === '/delete_process'){
+    } else if (pathname === '/delete_process'){ // deleta process
       var body = '';
       request.on('data', function(data){ // 정보 수신
         body += data;
@@ -150,18 +127,15 @@ var app = http.createServer(function(request,response){
       request.on('end',function(){ // 정보 수신을 끝낸다.
         var post = qs.parse(body);
         var id = post.id;
-        fs.unlink(`data/${id}`, function(){
+        var filteredId = path.parse(id).base;
+        fs.unlink(`data/${filteredId}`, function(){
           response.writeHead(302, {location:`/`}); // 302 : 원하는 페이지로 돌아가기
           response.end('success');
         })
       });
-
   } else {
       response.writeHead(404); // 404은 는 못찾았을때
       response.end('Not found'); 
-
   }
-
- 
 });
 app.listen(5000);

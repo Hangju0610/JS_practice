@@ -1,4 +1,4 @@
-// array, object
+// array, object << 서로 연관된 데이터를 담는 그릇
 
 // 자바스크립트에서의 함수는, 처리방법을 담고있는 구문(state)와 그것에 대한 값(value)를 동시에 가지고 있다.
 
@@ -18,6 +18,8 @@ var o = {
 }
 
 o.func(f)
+
+
 // var i = if(true){console.log(1+1)}; 조건문은 값이 아님
 
 // var w = while(true){console.log(1+1)}; 마찬가지로 조건문은 값이 아님
